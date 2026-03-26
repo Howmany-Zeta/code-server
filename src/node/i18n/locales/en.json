@@ -9,5 +9,8 @@
   "PASSWORD_PLACEHOLDER": "PASSWORD",
   "LOGIN_RATE_LIMIT": "Login rate limited!",
   "MISS_PASSWORD": "Missing password",
-  "INCORRECT_PASSWORD": "Incorrect password"
+  "INCORRECT_PASSWORD": "Incorrect password",
+  "GATEWAY_TOKEN_MISSING": "Missing session token",
+  "GATEWAY_SECRET_MISSING": "Server is not configured with jwt-secret",
+  "GATEWAY_TOKEN_INVALID": "Invalid or expired session token"
 }

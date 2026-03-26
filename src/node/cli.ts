@@ -1,4 +1,5 @@
 import { field, Level, logger } from "@coder/logger"
+import { createHash } from "crypto"
 import { promises as fs } from "fs"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -12,6 +13,8 @@ export enum Feature {
 
 export enum AuthType {
   Password = "password",
+  /** Gateway-issued session JWT (express-gateway); auth-docen verifies only. */
+  Gateway = "gateway",
   None = "none",
 }
 
@@ -54,6 +57,8 @@ export interface UserProvidedCodeArgs {
   "disable-proxy"?: boolean
   "session-socket"?: string
   "cookie-suffix"?: string
+  /** Passed through to embedded vscode server for REH `WORKBENCH_AUTH_SESSION` (gateway mode). */
+  "jwt-secret"?: string
   "link-protection-trusted-domains"?: string[]
   // locale is used by both VS Code and code-server.
   locale?: string
@@ -70,6 +75,12 @@ export interface UserProvidedArgs extends UserProvidedCodeArgs {
   auth?: AuthType
   password?: string
   "hashed-password"?: string
+  /** Secret to verify gateway-issued JWTs in session cookie (or use JWT_SECRET). */
+  "jwt-secret"?: string
+  /** Optional external login URL (e.g. auth-chatbot); receives return_to query with post-login URL. */
+  "auth-login-url"?: string
+  /** Base URL of express-gateway for gateway auth (login/register/Google). Override with STARTU_GATEWAY_URL. */
+  "gateway-url"?: string
   cert?: OptionalString
   "cert-host"?: string
   "cert-key"?: string
@@ -152,6 +163,21 @@ export const options: Options<Required<UserProvidedArgs>> = {
     description:
       "The password hashed with argon2 for password authentication (can only be passed in via $HASHED_PASSWORD or the config file). \n" +
       "Takes precedence over 'password'.",
+  },
+  "jwt-secret": {
+    type: "string",
+    description:
+      "Secret to verify gateway JWTs when auth is gateway (HS256). Can be set via JWT_SECRET. Must match express-gateway.",
+  },
+  "auth-login-url": {
+    type: "string",
+    description:
+      "When auth is gateway, optional URL to send users for external login. Appends ?return_to=<absolute URL>. After login, set the JWT cookie or redirect with token per your integration.",
+  },
+  "gateway-url": {
+    type: "string",
+    description:
+      "When auth is gateway, base URL of express-gateway for the built-in login UI (email, register, Google). Can be set via STARTU_GATEWAY_URL.",
   },
   cert: {
     type: OptionalString,
@@ -496,6 +522,7 @@ export const redactArgs = (args: UserProvidedArgs): UserProvidedArgs => {
     ...args,
     password: args.password ? "<redacted>" : undefined,
     "hashed-password": args["hashed-password"] ? "<redacted>" : undefined,
+    "jwt-secret": args["jwt-secret"] ? "<redacted>" : undefined,
     "github-auth": args["github-auth"] ? "<redacted>" : undefined,
   }
 }
@@ -516,6 +543,10 @@ export interface DefaultedArgs extends ConfigArgs {
   verbose: boolean
   usingEnvPassword: boolean
   usingEnvHashedPassword: boolean
+  /** Where the effective jwt-secret came from (for debugging gateway alignment). */
+  jwtSecretSource?: "cli" | "config" | "env"
+  /** sha256(jwt-secret) hex, first 16 chars — safe to compare with gateway without exposing the key. */
+  jwtSecretFingerprint?: string
   "extensions-dir": string
   "user-data-dir": string
   "session-socket": string
@@ -628,6 +659,29 @@ export async function setDefaults(cliArgs: UserProvidedArgs, configArgs?: Config
     args["cookie-suffix"] = process.env.CODE_SERVER_COOKIE_SUFFIX
   }
 
+  const hadJwtBeforeEnv = !!args["jwt-secret"]
+  if (!args["jwt-secret"] && process.env.JWT_SECRET) {
+    args["jwt-secret"] = process.env.JWT_SECRET
+  }
+  const jwtSecretSource: "cli" | "config" | "env" | undefined = args["jwt-secret"]
+    ? hadJwtBeforeEnv
+      ? cliArgs["jwt-secret"] !== undefined
+        ? "cli"
+        : "config"
+      : "env"
+    : undefined
+  const jwtSecretFingerprint = args["jwt-secret"]
+    ? createHash("sha256").update(args["jwt-secret"], "utf8").digest("hex").slice(0, 16)
+    : undefined
+
+  if (!args["auth-login-url"] && process.env.CODE_SERVER_AUTH_LOGIN_URL) {
+    args["auth-login-url"] = process.env.CODE_SERVER_AUTH_LOGIN_URL
+  }
+
+  if (!args["gateway-url"] && process.env.STARTU_GATEWAY_URL) {
+    args["gateway-url"] = process.env.STARTU_GATEWAY_URL
+  }
+
   if (process.env.GITHUB_TOKEN) {
     args["github-auth"] = process.env.GITHUB_TOKEN
   }
@@ -676,6 +730,8 @@ export async function setDefaults(cliArgs: UserProvidedArgs, configArgs?: Config
     ...args,
     usingEnvPassword,
     usingEnvHashedPassword,
+    jwtSecretSource,
+    jwtSecretFingerprint,
   } as DefaultedArgs // TODO: Technically no guarantee this is fulfilled.
 }
 

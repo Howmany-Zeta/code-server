@@ -20,9 +20,11 @@ import * as domainProxy from "./domainProxy"
 import { errorHandler, wsErrorHandler } from "./errors"
 import * as health from "./health"
 import * as login from "./login"
+import * as loginGateway from "./loginGateway"
 import * as logout from "./logout"
 import * as pathProxy from "./pathProxy"
 import * as update from "./update"
+import * as sessionHandoff from "./sessionHandoff"
 import * as vscode from "./vscode"
 
 /**
@@ -157,12 +159,17 @@ export const register = async (
   if (args.auth === AuthType.Password) {
     app.router.use("/login", login.router)
     app.router.use("/logout", logout.router)
+  } else if (args.auth === AuthType.Gateway) {
+    app.router.use("/login", loginGateway.router)
+    app.router.use("/logout", logout.router)
   } else {
     app.router.all("/login", (req, res) => redirect(req, res, "/", {}))
     app.router.all("/logout", (req, res) => redirect(req, res, "/", {}))
   }
 
   app.router.use("/update", update.router)
+
+  app.router.use(sessionHandoff.router)
 
   // For historic reasons we also load at /vscode because the root was replaced
   // by a plugin in v1 of Coder.  The plugin system (which was for internal use

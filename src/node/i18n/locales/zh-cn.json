@@ -9,5 +9,8 @@
   "PASSWORD_PLACEHOLDER": "密码",
   "LOGIN_RATE_LIMIT": "登录速率限制!",
   "MISS_PASSWORD": "缺少密码",
-  "INCORRECT_PASSWORD": "密码不正确"
+  "INCORRECT_PASSWORD": "密码不正确",
+  "GATEWAY_TOKEN_MISSING": "缺少会话令牌",
+  "GATEWAY_SECRET_MISSING": "服务器未配置 jwt-secret",
+  "GATEWAY_TOKEN_INVALID": "会话令牌无效或已过期"
 }

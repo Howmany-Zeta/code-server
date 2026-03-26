@@ -258,7 +258,7 @@ describe("parser", () => {
 
   it("should error if value is invalid", () => {
     expect(() => parse(["--port", "foo"])).toThrowError(/--port must be a number/)
-    expect(() => parse(["--auth", "invalid"])).toThrowError(/--auth valid values: \[password, none\]/)
+    expect(() => parse(["--auth", "invalid"])).toThrowError(/--auth valid values: \[password, gateway, none\]/)
     expect(() => parse(["--log", "invalid"])).toThrowError(/--log valid values: \[trace, debug, info, warn, error\]/)
   })
 
@@ -967,6 +967,8 @@ describe("toCodeArgs", () => {
     port: "8080",
     version: false,
     log: undefined,
+    jwtSecretFingerprint: undefined,
+    jwtSecretSource: undefined,
   }
 
   const testName = "vscode-args"
@@ -1047,7 +1049,7 @@ describe("optionDescriptions", () => {
     const opts: Partial<Options<Required<UserProvidedArgs>>> = {
       auth: { type: AuthType, description: "The type of authentication to use." },
     }
-    expect(optionDescriptions(opts)).toStrictEqual(["  --auth The type of authentication to use. [password, none]"])
+    expect(optionDescriptions(opts)).toStrictEqual(["  --auth The type of authentication to use. [password, gateway, none]"])
   })
 
   it("should show if an option is deprecated", () => {

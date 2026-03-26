@@ -47,6 +47,18 @@ body {
   outline: 2px solid rgb(63, 131, 248);
 }
 
+.external-login {
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.external-login .external-link {
+  color: rgb(37 99 235);
+  color: light-dark(rgb(37 99 235), rgb(96 165 250));
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .login-form > .user {
   display: none;
 }

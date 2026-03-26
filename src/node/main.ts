@@ -139,6 +139,10 @@ export const runCodeServer = async (
     )
   }
 
+  if (args.auth === AuthType.Gateway && !args["jwt-secret"]) {
+    throw new Error("Gateway authentication requires jwt-secret in the config file or JWT_SECRET in the environment")
+  }
+
   const app = await createApp(args)
   const protocol = args.cert ? "https" : "http"
   const serverAddress = ensureAddress(app.server, protocol)
@@ -156,6 +160,20 @@ export const runCodeServer = async (
       logger.info(`    - Using hashed-password from ${args.config}`)
     } else {
       logger.info(`    - Using password from ${args.config}`)
+    }
+  } else if (args.auth === AuthType.Gateway) {
+    logger.info("  - Gateway authentication is enabled (cookie or Authorization: Bearer)")
+    if (args.jwtSecretSource) {
+      logger.info(`    - JWT secret source: ${args.jwtSecretSource}`)
+    }
+    if (args.jwtSecretFingerprint) {
+      logger.info(`    - JWT secret fingerprint (sha256[:16]): ${args.jwtSecretFingerprint}`)
+    }
+    if (args["auth-login-url"]) {
+      logger.info(`    - External login URL: ${args["auth-login-url"]}`)
+    }
+    if (args["gateway-url"]) {
+      logger.info(`    - Gateway URL (login UI): ${args["gateway-url"]}`)
     }
   } else {
     logger.info("  - Authentication is disabled")

@@ -17,6 +17,10 @@ coverage
 # Code packages itself here.
 /lib/vscode-reh-web-*
 
+# Local Startu config (secrets); use config/startu.config.example.yaml as template
+config/startu.local.yaml
+.env.docen.local
+
 # Failed e2e test videos are saved here
 test/test-results
 

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' http: https: ws: wss:; img-src 'self' data: https:; font-src 'self' data:;"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <title>{{I18N_LOGIN_TITLE}}</title>
+    <link rel="icon" href="{{CS_STATIC_BASE}}/src/browser/media/favicon-dark-support.svg" />
+    <link rel="alternate icon" href="{{CS_STATIC_BASE}}/src/browser/media/favicon.ico" />
+    <link rel="manifest" href="{{BASE}}/manifest.json" crossorigin="use-credentials" />
+    <link rel="apple-touch-icon" sizes="192x192" href="{{CS_STATIC_BASE}}/src/browser/media/pwa-icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="{{CS_STATIC_BASE}}/src/browser/media/pwa-icon-512.png" />
+    <link href="{{CS_STATIC_BASE}}/src/browser/media/auth-gateway/assets/auth-gateway.css" rel="stylesheet" />
+    <meta id="coder-options" data-settings="{{OPTIONS}}" />
+  </head>
+  <body class="bg-background">
+    <div id="root"></div>
+    <script type="module" src="{{CS_STATIC_BASE}}/src/browser/media/auth-gateway/assets/auth-gateway.js"></script>
+  </body>
+</html>

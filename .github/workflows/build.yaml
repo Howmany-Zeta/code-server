@@ -50,11 +50,13 @@ jobs:
             code:
               - "src/**"
               - "test/**"
+              - "auth-gateway-ui/**"
             deps:
               - "lib/**"
               - "patches/**"
               - "package-lock.json"
               - "test/package-lock.json"
+              - "auth-gateway-ui/package-lock.json"
       - id: debug
         run: |
           echo "${{ toJSON(steps.filter )}}"
@@ -180,6 +182,8 @@ jobs:
             package-lock.json
             test/package-lock.json
       - run: SKIP_SUBMODULE_DEPS=1 npm ci
+      - name: Build auth-gateway login UI (Vite)
+        run: npm run build:auth-gateway-ui
       - run: npm run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

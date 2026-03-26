@@ -1,6 +1,7 @@
 import { field, logger } from "@coder/logger"
 import * as express from "express"
 import * as http from "http"
+import * as jwt from "jsonwebtoken"
 import * as net from "net"
 import qs from "qs"
 import { Disposable } from "../common/emitter"
@@ -30,6 +31,16 @@ export interface ClientConfiguration {
   base: string
   /** Relative path from this page to the static root.  No trailing slash. */
   csStaticBase: string
+  /** express-gateway origin (gateway login UI: Google / email / register). */
+  gatewayUrl?: string
+  /** Shown in the gateway login UI. */
+  appName?: string
+  /** Welcome line for the marketing panel (optional). */
+  welcomeText?: string
+  /** Post-login redirect path (query `to`). */
+  to?: string
+  /** Server-side token validation error (POST /login). */
+  loginError?: string
 }
 
 declare global {
@@ -111,6 +122,23 @@ export const ensureAuthenticated = async (
   }
 }
 
+function jwtBearer(req: express.Request): string | undefined {
+  const h = req.headers.authorization
+  if (!h?.startsWith("Bearer ")) {
+    return undefined
+  }
+  return h.slice(7).trim()
+}
+
+function isValidJwt(token: string, secret: string): boolean {
+  try {
+    jwt.verify(token, secret)
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
  * Return true if authenticated via cookies.
  */
@@ -131,6 +159,21 @@ export const authenticated = async (req: express.Request): Promise<boolean> => {
       }
 
       return await isCookieValid(isCookieValidArgs)
+    }
+    case AuthType.Gateway: {
+      const secret = req.args["jwt-secret"] || ""
+      if (!secret) {
+        return false
+      }
+      const bearer = jwtBearer(req)
+      if (bearer && isValidJwt(bearer, secret)) {
+        return true
+      }
+      const fromCookie = sanitizeString(req.cookies[req.cookieSessionName])
+      if (fromCookie && isValidJwt(fromCookie, secret)) {
+        return true
+      }
+      return false
     }
     default: {
       throw new Error(`Unsupported auth type ${req.args.auth}`)
@@ -321,6 +364,16 @@ export const getCookieOptions = (req: express.Request): express.CookieOptions =>
     domain: getCookieDomain(url.host, req.args["proxy-domain"]),
     path: normalize(url.pathname) || "/",
     sameSite: "lax",
+  }
+}
+
+/**
+ * Cookie options for JWT session: HttpOnly so page scripts cannot read the token.
+ */
+export const getJwtCookieOptions = (req: express.Request): express.CookieOptions => {
+  return {
+    ...getCookieOptions(req),
+    httpOnly: true,
   }
 }
 

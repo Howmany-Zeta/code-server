@@ -1,0 +1,22 @@
+# 本地/调试：模拟公网路径 https://startudiscovery.com/docen
+# 浏览器请打开带路径前缀的地址，例如: http://startudiscovery.com:8080/docen/
+# 建议在 /etc/hosts 增加: 127.0.0.1 startudiscovery.com
+#
+# 启动（auth-docen 根目录）:
+#   unset VSCODE_IPC_HOOK_CLI
+#   export JWT_SECRET='与 express-gateway 相同'
+#   export STARTU_GATEWAY_URL='http://127.0.0.1:3001'
+#   CODE_SERVER_CONFIG="$(pwd)/config/startu.docen.path.yaml" node out/node/entry.js
+
+bind-addr: 0.0.0.0:8080
+auth: gateway
+cert: false
+
+# 与浏览器地址栏 origin 一致（scheme+host+port，不含路径）
+# 若从局域网/另一台设备用本机公网或内网穿透 IP 访问 docen，必须把对应 origin 写进来。
+# express-gateway 侧还须把同一 origin 写入 ALLOWED_ORIGINS（Google OAuth return_to / CORS）。
+trusted-origins:
+  - "http://127.0.0.1:8080"
+  - "http://100.81.172.125:8080"
+  - "http://startudiscovery.com:8080"
+  - "https://startudiscovery.com"
